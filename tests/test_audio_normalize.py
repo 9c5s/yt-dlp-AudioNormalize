@@ -297,7 +297,7 @@ class TestBuildNormalizeKwargs:
         """非boolフラグが末尾にあり値がない場合に警告が出ること"""
         pp = make_pp(["-t"])
         pp._build_normalize_kwargs()
-        pp.report_warning.assert_called_once()
+        pp.report_warning.assert_called_once_with("値が必要な引数の値がありません: -t")
 
 
 # === --use-postprocessor kwargs ===
@@ -421,7 +421,9 @@ class TestNormalizeFile:
 
         pp._normalize_file(str(tmp_path / "nonexistent.mp4"))
 
-        pp.report_warning.assert_called_once()
+        pp.report_warning.assert_called_once_with(
+            f"ファイルが存在しません: {tmp_path / 'nonexistent.mp4'}"
+        )
 
     @patch("yt_dlp_plugins.postprocessor.audio_normalize.FFmpegNormalize")
     def test_success_calls_normalization_pipeline(
@@ -456,7 +458,9 @@ class TestNormalizeFile:
         pp._normalize_file(str(test_file))
 
         assert test_file.read_bytes() == b"original content"
-        pp.report_warning.assert_called_once()
+        pp.report_warning.assert_called_once_with(
+            "音量の正規化に失敗しました: normalization failed"
+        )
 
     @patch("yt_dlp_plugins.postprocessor.audio_normalize.FFmpegNormalize")
     def test_unexpected_error_cleans_up_tmp(

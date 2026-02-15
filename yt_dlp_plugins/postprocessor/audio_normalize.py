@@ -196,6 +196,9 @@ class AudioNormalizePP(PostProcessor):
         for key in args_iter:
             mapping = param_map.get(key)
             if not mapping:
+                # 未知のフラグはスキップする
+                # 値付きフラグの場合その値も次のイテレーションでキーとして処理されるが、
+                # param_mapのキーは全て"-"で始まるため通常の値は再びここでスキップされる
                 continue
             param_name, param_type = mapping
             if param_type is bool:
