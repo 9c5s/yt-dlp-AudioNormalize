@@ -284,10 +284,10 @@ class AudioNormalizePP(PostProcessor):
             return
 
         try:
-            norm_kwargs = self._build_normalize_kwargs()
-            inferred = self._infer_defaults(information)
-            for key, value in inferred.items():
-                norm_kwargs.setdefault(key, value)
+            norm_kwargs = {
+                **self._infer_defaults(information),
+                **self._build_normalize_kwargs(),
+            }
             norm = FFmpegNormalize(**norm_kwargs)
             norm.add_media_file(str(path), tmp_path)
             norm.run_normalization()
