@@ -82,6 +82,17 @@ class AudioNormalizePP(PostProcessor):
         "audio_bitrate": str,  # 型注釈はfloatだが実際はstr("192k"等)を受け付ける
     }
 
+    # yt-dlpのデコーダ名 -> ffmpegエンコーダ名の変換マッピング
+    # 名前が一致するコーデック(aac, flac等)はマッピング不要
+    _CODEC_MAP: ClassVar[dict[str, str]] = {
+        "opus": "libopus",
+        "vorbis": "libvorbis",
+        "mp3": "libmp3lame",
+    }
+
+    # デフォルトのサンプルレート(Hz)
+    _DEFAULT_SAMPLE_RATE: ClassVar[int] = 48000
+
     def __init__(self, downloader: Any = None, **kwargs: str) -> None:  # noqa: ANN401
         """AudioNormalizePPを初期化する
 
@@ -134,11 +145,44 @@ class AudioNormalizePP(PostProcessor):
                 param_map[flag] = param_map[long_flag]
         return param_map
 
+    @staticmethod
+    def _infer_defaults(information: _InfoDict) -> dict[str, Any]:
+        """_InfoDictからFFmpegNormalizeのデフォルト値を推定する
+
+        入力ファイルの拡張子と音声コーデックに基づいて、extension, audio_codec,
+        sample_rate, audio_bitrate のデフォルト値を決定する
+        戻り値は_normalize_fileで辞書アンパック({**defaults, **user_kwargs})により
+        ユーザー指定値とマージされるため、ユーザー指定値が優先される
+
+        sample_rate: asrがあればその値を使い、
+            なければ_DEFAULT_SAMPLE_RATEにフォールバック
+        audio_bitrate: abr(kbps, float)を"Nk"形式の文字列に変換する
+            なければスキップ
+
+        Args:
+            information: yt-dlpの情報辞書
+        """
+        defaults: dict[str, Any] = {}
+        ext = information.get("ext")
+        if ext:
+            defaults["extension"] = ext
+        acodec = information.get("acodec")
+        if acodec and acodec != "none":
+            defaults["audio_codec"] = AudioNormalizePP._CODEC_MAP.get(acodec, acodec)
+        asr = information.get("asr")
+        defaults["sample_rate"] = (
+            AudioNormalizePP._DEFAULT_SAMPLE_RATE if asr is None else asr
+        )
+        abr = information.get("abr")
+        if abr is not None:
+            defaults["audio_bitrate"] = f"{int(abr)}k"
+        return defaults
+
     def run(self, information: _InfoDict) -> tuple[list[str], _InfoDict]:
         """ダウンロード済みファイルの音量を正規化する"""
         filepath = information.get("filepath")
         if filepath:
-            self._normalize_file(filepath)
+            self._normalize_file(filepath, information)
         return [], information
 
     def _build_normalize_kwargs(self) -> dict[str, Any]:
@@ -181,7 +225,7 @@ class AudioNormalizePP(PostProcessor):
                 try:
                     kwargs[param_name] = typ(str_val)
                 except (ValueError, TypeError):
-                    msg = f"無効なkwargs値: {key}={str_val}"
+                    msg = f"無効なパラメータです: {key}={str_val}"
                     self.report_warning(msg)
         return kwargs
 
@@ -210,17 +254,19 @@ class AudioNormalizePP(PostProcessor):
                     try:
                         kwargs[param_name] = param_type(value)
                     except (ValueError, TypeError):
-                        msg = f"無効な引数値: {key} {value}"
+                        msg = f"無効な引数値です: {key} {value}"
                         self.report_warning(msg)
                 except StopIteration:
-                    msg = f"値が必要な引数の値がありません: {key}"
+                    msg = f"引数の値がありません: {key}"
                     self.report_warning(msg)
         return kwargs
 
-    def _normalize_file(self, filepath: str) -> None:
+    def _normalize_file(self, filepath: str, information: _InfoDict) -> None:
         """指定されたファイルの音量を正規化する
 
         一時ファイルに正規化した結果を出力し、成功した場合のみ元ファイルを置換する
+        _infer_defaultsで推定したデフォルト値を適用するが、
+        ユーザーが明示指定した値(CLI/PPA)はsetdefaultにより上書きされない
         """
         path = Path(filepath)
         if not path.exists():
@@ -228,7 +274,7 @@ class AudioNormalizePP(PostProcessor):
             self.report_warning(msg)
             return
 
-        msg = f"音量の正規化を開始: {path.name}"
+        msg = f"音量正規化を開始します: {path.name}"
         self.to_screen(msg)  # pyright: ignore[reportCallIssue]
 
         try:
@@ -239,14 +285,17 @@ class AudioNormalizePP(PostProcessor):
             return
 
         try:
-            norm_kwargs = self._build_normalize_kwargs()
+            norm_kwargs = {
+                **self._infer_defaults(information),
+                **self._build_normalize_kwargs(),
+            }
             norm = FFmpegNormalize(**norm_kwargs)
             norm.add_media_file(str(path), tmp_path)
             norm.run_normalization()
             shutil.move(tmp_path, str(path))
-            msg = f"音量の正規化が完了: {path.name}"
+            msg = f"音量正規化が完了しました: {path.name}"
             self.to_screen(msg)  # pyright: ignore[reportCallIssue]
         except (FFmpegNormalizeError, OSError) as e:
-            self.report_warning(f"音量の正規化に失敗しました: {e}")
+            self.report_warning(f"音量正規化に失敗しました: {e}")
         finally:
             Path(tmp_path).unlink(missing_ok=True)
