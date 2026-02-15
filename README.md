@@ -10,7 +10,7 @@
 
 ## インストール
 
-```
+```bash
 pip install -U yt-dlp-audio-normalize
 ```
 
