@@ -30,6 +30,10 @@ dev = [
     "yt-dlp>=2026.2.4",
 ]
 
+[tool.setuptools.packages.find]
+namespaces = true
+include = ["yt_dlp_plugins*"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = ["-v", "--strict-markers", "--tb=short"]
