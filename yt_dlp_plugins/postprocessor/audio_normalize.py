@@ -169,7 +169,9 @@ class AudioNormalizePP(PostProcessor):
         if acodec and acodec != "none":
             defaults["audio_codec"] = AudioNormalizePP._CODEC_MAP.get(acodec, acodec)
         asr = information.get("asr")
-        defaults["sample_rate"] = asr or AudioNormalizePP._DEFAULT_SAMPLE_RATE
+        defaults["sample_rate"] = (
+            AudioNormalizePP._DEFAULT_SAMPLE_RATE if asr is None else asr
+        )
         abr = information.get("abr")
         if abr:
             defaults["audio_bitrate"] = f"{int(abr)}k"

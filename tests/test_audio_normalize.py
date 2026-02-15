@@ -576,7 +576,7 @@ class TestCodecMap:
     """デコーダ名からエンコーダ名への変換マッピングが正しいこと"""
 
     @pytest.mark.parametrize(
-        "decoder, encoder",
+        ("decoder", "encoder"),
         [
             ("opus", "libopus"),
             ("vorbis", "libvorbis"),
@@ -606,7 +606,7 @@ class TestInferDefaults:
         assert result["audio_bitrate"] == "128k"
 
     @pytest.mark.parametrize(
-        "acodec, expected_encoder",
+        ("acodec", "expected_encoder"),
         [
             ("opus", "libopus"),
             ("vorbis", "libvorbis"),

@@ -312,7 +312,7 @@ mark-parentheses = true
 # csv: カンマ区切り文字列
 # tuple: タプル
 # list: リスト
-parametrize-names-type = "csv"
+parametrize-names-type = "tuple"
 
 # パラメータ化の値の形式
 parametrize-values-type = "list"
