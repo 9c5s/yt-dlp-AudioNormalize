@@ -681,6 +681,14 @@ class TestInferDefaults:
 
         assert result["sample_rate"] == 48000
 
+    def test_asr_zero_is_preserved(self) -> None:
+        """asr=0 が欠損扱いされず保持されること"""
+        info = {"ext": "mp3", "acodec": "mp3", "asr": 0}
+
+        result = AudioNormalizePP._infer_defaults(info)
+
+        assert result["sample_rate"] == 0
+
     def test_abr_sets_audio_bitrate(self) -> None:
         """abr から "128k" 形式の audio_bitrate が設定されること"""
         info = {"ext": "mp3", "acodec": "mp3", "abr": 128.0}

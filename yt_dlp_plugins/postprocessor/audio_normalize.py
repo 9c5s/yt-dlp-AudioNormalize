@@ -173,7 +173,7 @@ class AudioNormalizePP(PostProcessor):
             AudioNormalizePP._DEFAULT_SAMPLE_RATE if asr is None else asr
         )
         abr = information.get("abr")
-        if abr:
+        if abr is not None:
             defaults["audio_bitrate"] = f"{int(abr)}k"
         return defaults
 
