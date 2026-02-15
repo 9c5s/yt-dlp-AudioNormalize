@@ -245,4 +245,5 @@ class AudioNormalizePP(PostProcessor):
             self.to_screen(msg)  # pyright: ignore[reportCallIssue]
         except (FFmpegNormalizeError, OSError) as e:
             self.report_warning(f"音量の正規化に失敗しました: {e}")
+        finally:
             Path(tmp_path).unlink(missing_ok=True)

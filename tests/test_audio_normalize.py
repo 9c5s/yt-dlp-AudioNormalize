@@ -452,6 +452,23 @@ class TestNormalizeFile:
         assert test_file.read_bytes() == b"original content"
         pp.report_warning.assert_called_once()
 
+    @patch("yt_dlp_plugins.postprocessor.audio_normalize.FFmpegNormalize")
+    def test_unexpected_error_cleans_up_tmp(
+        self, mock_ffmpeg_cls: MagicMock, make_pp, tmp_path: Path
+    ) -> None:
+        """予期しない例外でも一時ファイルが削除されること"""
+        test_file = tmp_path / "test.mp4"
+        test_file.write_bytes(b"original content")
+        mock_ffmpeg_cls.side_effect = TypeError("unexpected")
+        pp = make_pp()
+
+        with pytest.raises(TypeError, match="unexpected"):
+            pp._normalize_file(str(test_file))
+
+        assert test_file.read_bytes() == b"original content"
+        tmp_files = list(tmp_path.glob("*.mp4"))
+        assert tmp_files == [test_file]
+
 
 # === run ===
 
