@@ -1,6 +1,39 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=82.0"]
 build-backend = "setuptools.build_meta"
 
-[tool.distutils.bdist_wheel]
-universal = true
+[project]
+name = "yt-dlp-audio-normalize"
+version = "0.1.0"
+description = "yt-dlp postprocessor plugin for audio normalization using ffmpeg-normalize"
+readme = "README.md"
+license = "Unlicense"
+requires-python = ">=3.10"
+authors = [{name = "9c5s"}]
+keywords = ["yt-dlp", "audio", "normalization", "ffmpeg", "loudness"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Multimedia :: Sound/Audio",
+]
+dependencies = [
+    "ffmpeg-normalize>=1.37.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.0",
+    "yt-dlp>=2026.2.4",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["-v", "--strict-markers", "--tb=short"]
+
+[project.urls]
+Repository = "https://github.com/9c5s/yt-dlp-AudioNormalize"
+Issues = "https://github.com/9c5s/yt-dlp-AudioNormalize/issues"
