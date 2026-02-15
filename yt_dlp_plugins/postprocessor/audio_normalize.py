@@ -192,28 +192,25 @@ class AudioNormalizePP(PostProcessor):
             self._configuration_args(self.pp_key()),  # type: ignore[attr-defined]
         )
         param_map = self._build_param_map()
-        i = 0
-        while i < len(args):
-            key = args[i]
+        args_iter = iter(args)
+        for key in args_iter:
             mapping = param_map.get(key)
             if not mapping:
-                i += 1
                 continue
             param_name, param_type = mapping
             if param_type is bool:
                 kwargs[param_name] = True
-                i += 1
-            elif i + 1 < len(args):
-                try:
-                    kwargs[param_name] = param_type(args[i + 1])
-                except (ValueError, TypeError):
-                    msg = f"無効な引数値: {key} {args[i + 1]}"
-                    self.report_warning(msg)
-                i += 2
             else:
-                msg = f"値が必要な引数の値がありません: {key}"
-                self.report_warning(msg)
-                i += 1
+                try:
+                    value = next(args_iter)
+                    try:
+                        kwargs[param_name] = param_type(value)
+                    except (ValueError, TypeError):
+                        msg = f"無効な引数値: {key} {value}"
+                        self.report_warning(msg)
+                except StopIteration:
+                    msg = f"値が必要な引数の値がありません: {key}"
+                    self.report_warning(msg)
         return kwargs
 
     def _normalize_file(self, filepath: str) -> None:
