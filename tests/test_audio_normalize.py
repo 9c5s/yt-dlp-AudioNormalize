@@ -293,6 +293,12 @@ class TestBuildNormalizeKwargs:
         assert result["audio_codec"] == "aac"
         assert result["audio_bitrate"] == "128k"
 
+    def test_non_bool_flag_at_end_warns(self, make_pp) -> None:
+        """非boolフラグが末尾にあり値がない場合に警告が出ること"""
+        pp = make_pp(["-t"])
+        pp._build_normalize_kwargs()
+        pp.report_warning.assert_called_once()
+
 
 # === --use-postprocessor kwargs ===
 
