@@ -211,6 +211,12 @@ class TestBuildParamMap:
         assert result["--audio-bitrate"][1] is str
         assert result["-b:a"][1] is str
 
+    def test_return_key_excluded(self) -> None:
+        """get_type_hintsの'return'キーがマッピングに含まれないこと"""
+        result = AudioNormalizePP._build_param_map()
+
+        assert "--return" not in result
+
     def test_cache_returns_same_object(self) -> None:
         """functools.cacheにより2回呼んでも同一オブジェクトが返されること"""
         result1 = AudioNormalizePP._build_param_map()

@@ -119,6 +119,8 @@ class AudioNormalizePP(PostProcessor):
         hints = get_type_hints(FFmpegNormalize.__init__)
         param_map: dict[str, tuple[str, type]] = {}
         for param_name, hint in hints.items():
+            if param_name == "return":
+                continue
             scalar_type = AudioNormalizePP._extract_scalar_type(hint)
             if scalar_type is None:
                 continue
