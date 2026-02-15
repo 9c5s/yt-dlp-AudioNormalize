@@ -1,32 +1,3 @@
-"""AudioNormalizePPの仕様テスト
-
-このテストスイートはAudioNormalizePPの全機能を以下の観点で検証する:
-
-1. 型ヒント解析(_extract_scalar_type):
-   FFmpegNormalize.__init__の型アノテーションからスカラー型を抽出する仕組み
-
-2. フラグ-パラメータマッピング構築(_build_param_map):
-   CLIフラグ(--target-level, -t等)からパラメータ名と型へのマッピング自動生成
-
-3. PPA引数パース(_build_normalize_kwargs):
-   --ppa "AudioNormalize:ARGS" 形式のCLI引数をパースしてkwargsに変換
-
-4. --use-postprocessor kwargs:
-   --use-postprocessor "AudioNormalize:key=value" 形式のパラメータ処理と型変換
-
-5. ファイル正規化(_normalize_file):
-   ffmpeg-normalizeによる音量正規化の実行とエラー時の安全性保証
-
-6. PostProcessorエントリポイント(run):
-   yt-dlpから呼び出されるメインエントリポイントの振る舞い
-
-7. 短縮フラグ整合性(_SHORT_FLAGS):
-   短縮フラグと長形式フラグの一貫性
-
-8. プラグイン検出:
-   yt-dlpプラグインシステムによる自動検出の正当性
-"""
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal, Union
@@ -305,7 +276,7 @@ class TestBuildNormalizeKwargs:
         """非boolフラグが末尾にあり値がない場合に警告が出ること"""
         pp = make_pp(["-t"])
         pp._build_normalize_kwargs()
-        pp.report_warning.assert_called_once_with("値が必要な引数の値がありません: -t")
+        pp.report_warning.assert_called_once_with("引数の値がありません: -t")
 
 
 # === --use-postprocessor kwargs ===
@@ -426,8 +397,9 @@ class TestNormalizeFile:
     def test_missing_file_skipped_with_warning(self, make_pp, tmp_path: Path) -> None:
         """存在しないファイルが警告付きでスキップされること"""
         pp = make_pp()
+        info = {"filepath": str(tmp_path / "nonexistent.mp4")}
 
-        pp._normalize_file(str(tmp_path / "nonexistent.mp4"))
+        pp._normalize_file(str(tmp_path / "nonexistent.mp4"), info)
 
         pp.report_warning.assert_called_once_with(
             f"ファイルが存在しません: {tmp_path / 'nonexistent.mp4'}"
@@ -443,8 +415,9 @@ class TestNormalizeFile:
         mock_norm = MagicMock()
         mock_ffmpeg_cls.return_value = mock_norm
         pp = make_pp()
+        info = {"filepath": str(test_file), "ext": "mp4", "acodec": "aac"}
 
-        pp._normalize_file(str(test_file))
+        pp._normalize_file(str(test_file), info)
 
         mock_norm.add_media_file.assert_called_once()
         mock_norm.run_normalization.assert_called_once()
@@ -462,12 +435,13 @@ class TestNormalizeFile:
         )
         mock_ffmpeg_cls.return_value = mock_norm
         pp = make_pp()
+        info = {"filepath": str(test_file), "ext": "mp4", "acodec": "aac"}
 
-        pp._normalize_file(str(test_file))
+        pp._normalize_file(str(test_file), info)
 
         assert test_file.read_bytes() == b"original content"
         pp.report_warning.assert_called_once_with(
-            "音量の正規化に失敗しました: normalization failed"
+            "音量正規化に失敗しました: normalization failed"
         )
 
     @patch("yt_dlp_plugins.postprocessor.audio_normalize.FFmpegNormalize")
@@ -479,13 +453,79 @@ class TestNormalizeFile:
         test_file.write_bytes(b"original content")
         mock_ffmpeg_cls.side_effect = TypeError("unexpected")
         pp = make_pp()
+        info = {"filepath": str(test_file), "ext": "mp4", "acodec": "aac"}
 
         with pytest.raises(TypeError, match="unexpected"):
-            pp._normalize_file(str(test_file))
+            pp._normalize_file(str(test_file), info)
 
         assert test_file.read_bytes() == b"original content"
         tmp_files = list(tmp_path.glob("*.mp4"))
         assert tmp_files == [test_file]
+
+    @patch("yt_dlp_plugins.postprocessor.audio_normalize.FFmpegNormalize")
+    def test_inferred_defaults_passed_to_ffmpeg_normalize(
+        self, mock_ffmpeg_cls: MagicMock, make_pp, tmp_path: Path
+    ) -> None:
+        """info辞書から推定したデフォルト値がFFmpegNormalizeに渡されること"""
+        test_file = tmp_path / "test.opus"
+        test_file.write_bytes(b"content")
+        mock_norm = MagicMock()
+        mock_ffmpeg_cls.return_value = mock_norm
+        pp = make_pp()
+        info = {
+            "filepath": str(test_file),
+            "ext": "opus",
+            "acodec": "opus",
+            "asr": 44100,
+            "abr": 128.0,
+        }
+
+        pp._normalize_file(str(test_file), info)
+
+        call_kwargs = mock_ffmpeg_cls.call_args[1]
+        assert call_kwargs["extension"] == "opus"
+        assert call_kwargs["audio_codec"] == "libopus"
+        assert call_kwargs["sample_rate"] == 44100
+        assert call_kwargs["audio_bitrate"] == "128k"
+
+    @patch("yt_dlp_plugins.postprocessor.audio_normalize.FFmpegNormalize")
+    def test_user_specified_overrides_inferred(
+        self, mock_ffmpeg_cls: MagicMock, make_pp, tmp_path: Path
+    ) -> None:
+        """ユーザー指定(CLI/PPA)が自動推定より優先されること"""
+        test_file = tmp_path / "test.opus"
+        test_file.write_bytes(b"content")
+        mock_norm = MagicMock()
+        mock_ffmpeg_cls.return_value = mock_norm
+        pp = make_pp(audio_codec="aac", extension="m4a", sample_rate="44100")
+        info = {"filepath": str(test_file), "ext": "opus", "acodec": "opus"}
+
+        pp._normalize_file(str(test_file), info)
+
+        call_kwargs = mock_ffmpeg_cls.call_args[1]
+        assert call_kwargs["audio_codec"] == "aac"
+        assert call_kwargs["extension"] == "m4a"
+        assert call_kwargs["sample_rate"] == 44100
+
+    @patch("yt_dlp_plugins.postprocessor.audio_normalize.FFmpegNormalize")
+    def test_no_metadata_backward_compatible(
+        self, mock_ffmpeg_cls: MagicMock, make_pp, tmp_path: Path
+    ) -> None:
+        """メタデータ未提供時に後方互換性が保たれること"""
+        test_file = tmp_path / "test.mp4"
+        test_file.write_bytes(b"content")
+        mock_norm = MagicMock()
+        mock_ffmpeg_cls.return_value = mock_norm
+        pp = make_pp()
+        info = {"filepath": str(test_file)}
+
+        pp._normalize_file(str(test_file), info)
+
+        call_kwargs = mock_ffmpeg_cls.call_args[1]
+        assert "extension" not in call_kwargs
+        assert "audio_codec" not in call_kwargs
+        assert call_kwargs["sample_rate"] == 48000
+        assert "audio_bitrate" not in call_kwargs
 
 
 # === run ===
@@ -499,14 +539,14 @@ class TestRun:
     """
 
     def test_filepath_present_triggers_normalize(self, make_pp) -> None:
-        """infoにfilepathが存在する場合、そのパスで正規化が実行されること"""
+        """infoにfilepathが存在する場合、そのパスとinfo辞書で正規化が実行されること"""
         pp = make_pp()
         pp._normalize_file = MagicMock()
         info = {"filepath": "C:/downloads/test.mp4"}
 
         pp.run(info)
 
-        pp._normalize_file.assert_called_once_with("C:/downloads/test.mp4")
+        pp._normalize_file.assert_called_once_with("C:/downloads/test.mp4", info)
 
     def test_without_filepath_skips(self, make_pp) -> None:
         """infoにfilepathが存在しない場合、正規化が実行されないこと"""
@@ -527,6 +567,143 @@ class TestRun:
         result = pp.run(info)
 
         assert result == ([], info)
+
+
+# === _CODEC_MAP ===
+
+
+class TestCodecMap:
+    """デコーダ名からエンコーダ名への変換マッピングが正しいこと"""
+
+    @pytest.mark.parametrize(
+        "decoder, encoder",
+        [
+            ("opus", "libopus"),
+            ("vorbis", "libvorbis"),
+            ("mp3", "libmp3lame"),
+        ],
+    )
+    def test_codec_map_entries(self, decoder: str, encoder: str) -> None:
+        """_CODEC_MAPの各エントリが正しいエンコーダ名を返すこと"""
+        assert AudioNormalizePP._CODEC_MAP[decoder] == encoder
+
+
+# === _infer_defaults ===
+
+
+class TestInferDefaults:
+    """_InfoDictからFFmpegNormalizeのデフォルト値を推定すること"""
+
+    def test_ext_and_acodec_both_present(self) -> None:
+        """ext, acodec, asr, abr の全てがある場合に正しく設定されること"""
+        info = {"ext": "opus", "acodec": "opus", "asr": 44100, "abr": 128.0}
+
+        result = AudioNormalizePP._infer_defaults(info)
+
+        assert result["extension"] == "opus"
+        assert result["audio_codec"] == "libopus"
+        assert result["sample_rate"] == 44100
+        assert result["audio_bitrate"] == "128k"
+
+    @pytest.mark.parametrize(
+        "acodec, expected_encoder",
+        [
+            ("opus", "libopus"),
+            ("vorbis", "libvorbis"),
+            ("mp3", "libmp3lame"),
+        ],
+    )
+    def test_codec_requiring_mapping(self, acodec: str, expected_encoder: str) -> None:
+        """マッピングが必要なコーデックが正しく変換されること"""
+        info = {"ext": "test", "acodec": acodec}
+
+        result = AudioNormalizePP._infer_defaults(info)
+
+        assert result["audio_codec"] == expected_encoder
+
+    @pytest.mark.parametrize("acodec", ["aac", "flac", "alac", "pcm_s16le"])
+    def test_codec_not_requiring_mapping(self, acodec: str) -> None:
+        """マッピング不要なコーデックがそのまま通ること"""
+        info = {"ext": "test", "acodec": acodec}
+
+        result = AudioNormalizePP._infer_defaults(info)
+
+        assert result["audio_codec"] == acodec
+
+    def test_acodec_none_skips_audio_codec(self) -> None:
+        """acodec が "none" の場合に audio_codec がスキップされること"""
+        info = {"ext": "mp4", "acodec": "none"}
+
+        result = AudioNormalizePP._infer_defaults(info)
+
+        assert "audio_codec" not in result
+        assert result["extension"] == "mp4"
+
+    def test_missing_ext_skips_extension(self) -> None:
+        """ext が欠損している場合に extension がスキップされること"""
+        info = {"acodec": "aac"}
+
+        result = AudioNormalizePP._infer_defaults(info)
+
+        assert "extension" not in result
+        assert result["audio_codec"] == "aac"
+
+    def test_missing_acodec_skips_audio_codec(self) -> None:
+        """acodec が欠損している場合に audio_codec がスキップされること"""
+        info = {"ext": "mp4"}
+
+        result = AudioNormalizePP._infer_defaults(info)
+
+        assert "audio_codec" not in result
+        assert result["extension"] == "mp4"
+
+    def test_empty_info_returns_only_sample_rate(self) -> None:
+        """空の情報辞書では sample_rate のみが返されること"""
+        info = {}
+
+        result = AudioNormalizePP._infer_defaults(info)
+
+        assert result == {"sample_rate": 48000}
+
+    def test_asr_sets_sample_rate(self) -> None:
+        """asr が存在する場合にその値が sample_rate に設定されること"""
+        info = {"ext": "mp3", "acodec": "mp3", "asr": 44100}
+
+        result = AudioNormalizePP._infer_defaults(info)
+
+        assert result["sample_rate"] == 44100
+
+    def test_asr_fallback_to_default(self) -> None:
+        """asr がない場合に 48000 にフォールバックされること"""
+        info = {"ext": "mp3", "acodec": "mp3"}
+
+        result = AudioNormalizePP._infer_defaults(info)
+
+        assert result["sample_rate"] == 48000
+
+    def test_abr_sets_audio_bitrate(self) -> None:
+        """abr から "128k" 形式の audio_bitrate が設定されること"""
+        info = {"ext": "mp3", "acodec": "mp3", "abr": 128.0}
+
+        result = AudioNormalizePP._infer_defaults(info)
+
+        assert result["audio_bitrate"] == "128k"
+
+    def test_abr_rounds_to_int(self) -> None:
+        """abr が小数の場合に整数に切り捨てられること"""
+        info = {"ext": "mp3", "acodec": "mp3", "abr": 128.5}
+
+        result = AudioNormalizePP._infer_defaults(info)
+
+        assert result["audio_bitrate"] == "128k"
+
+    def test_missing_abr_skips_audio_bitrate(self) -> None:
+        """abr がない場合に audio_bitrate がスキップされること"""
+        info = {"ext": "mp3", "acodec": "mp3"}
+
+        result = AudioNormalizePP._infer_defaults(info)
+
+        assert "audio_bitrate" not in result
 
 
 # === _SHORT_FLAGS ===
