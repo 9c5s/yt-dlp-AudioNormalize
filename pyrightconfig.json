@@ -1,0 +1,7 @@
+{
+  "include": [
+    "yt_dlp_plugins/"
+  ],
+  "stubPath": "typings",
+  "typeCheckingMode": "strict"
+}
