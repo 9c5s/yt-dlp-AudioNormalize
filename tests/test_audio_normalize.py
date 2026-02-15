@@ -697,13 +697,21 @@ class TestInferDefaults:
 
         assert result["audio_bitrate"] == "128k"
 
-    def test_abr_rounds_to_int(self) -> None:
+    def test_abr_truncates_to_int(self) -> None:
         """abr が小数の場合に整数に切り捨てられること"""
         info = {"ext": "mp3", "acodec": "mp3", "abr": 128.5}
 
         result = AudioNormalizePP._infer_defaults(info)
 
         assert result["audio_bitrate"] == "128k"
+
+    def test_abr_zero_is_preserved(self) -> None:
+        """abr=0 が欠損扱いされず保持されること"""
+        info = {"ext": "mp3", "acodec": "mp3", "abr": 0}
+
+        result = AudioNormalizePP._infer_defaults(info)
+
+        assert result["audio_bitrate"] == "0k"
 
     def test_missing_abr_skips_audio_bitrate(self) -> None:
         """abr がない場合に audio_bitrate がスキップされること"""

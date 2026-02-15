@@ -151,7 +151,8 @@ class AudioNormalizePP(PostProcessor):
 
         入力ファイルの拡張子と音声コーデックに基づいて、extension, audio_codec,
         sample_rate, audio_bitrate のデフォルト値を決定する
-        ユーザーが明示指定した値はsetdefaultにより上書きされない
+        戻り値は_normalize_fileで辞書アンパック({**defaults, **user_kwargs})により
+        ユーザー指定値とマージされるため、ユーザー指定値が優先される
 
         sample_rate: asrがあればその値を使い、
             なければ_DEFAULT_SAMPLE_RATEにフォールバック
