@@ -18,6 +18,7 @@ from typing import (
     Any,
     ClassVar,
     Literal,
+    Union,
     cast,
     get_args,
     get_origin,
@@ -102,7 +103,7 @@ class AudioNormalizePP(PostProcessor):
             return type(first) if isinstance(first, (str, int, float, bool)) else str
         if origin is list:
             return None
-        if origin is types.UnionType:
+        if origin is types.UnionType or origin is Union:
             for arg in get_args(hint):
                 if arg is not type(None):
                     return AudioNormalizePP._extract_scalar_type(arg)

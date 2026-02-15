@@ -29,7 +29,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, Union
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -139,6 +139,14 @@ class TestExtractScalarType:
     def test_union_bool_none_extracts_bool(self) -> None:
         """bool | NoneからNoneが除外されてboolが抽出されること"""
         assert AudioNormalizePP._extract_scalar_type(bool | None) is bool
+
+    def test_typing_union_float_none_extracts_float(self) -> None:
+        """typing.Union[float, None]からNoneが除外されてfloatが抽出されること"""
+        assert AudioNormalizePP._extract_scalar_type(Union[float, None]) is float  # noqa: UP007
+
+    def test_typing_optional_str_extracts_str(self) -> None:
+        """typing.Optional[str]からNoneが除外されてstrが抽出されること"""
+        assert AudioNormalizePP._extract_scalar_type(Union[str, None]) is str  # noqa: UP007
 
     # --- フォールバック ---
 
