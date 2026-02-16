@@ -455,7 +455,7 @@ required-imports = ["from __future__ import annotations"]
 
 # ファーストパーティモジュール(プロジェクト固有)
 # プロジェクトに応じて設定
-known-first-party = []
+known-first-party = ["yt_dlp_plugins"]
 
 # インポートセクションの順序
 section-order = [
