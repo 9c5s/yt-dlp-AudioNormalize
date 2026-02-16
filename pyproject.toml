@@ -601,14 +601,12 @@ keep-runtime-typing = true
 
 # CLIスクリプト
 "scripts/**/*.py" = [
-  "S603",    # shell=Trueでのsubprocess呼び出し(S604と競合)
+  "S603",    # subprocess-without-shell-equals-true(第一引数が未検証)
   "S607",    # 実行可能パス(gh, git, uvなどの実行で必要)
 ]
 
 # 実験的・プロトタイプコード
 "experimental/**/*.py" = [
-  "ERA001",  # コメントアウトされたコード(実験中)
-  "FIX002",  # TODOコメント(未完成の印)
   "PLR2004", # マジックナンバー(調整中の値)
   "S101",    # assert文(デバッグ用)
 ]
