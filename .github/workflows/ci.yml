@@ -13,11 +13,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: astral-sh/setup-uv@v7
+
       - name: Run ruff format check
-        run: pipx run ruff format --check
+        run: uvx ruff format --check
 
       - name: Run ruff lint
-        run: pipx run ruff check
+        run: uvx ruff check
 
   typecheck:
     runs-on: ubuntu-latest
