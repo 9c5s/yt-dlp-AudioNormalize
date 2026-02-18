@@ -32,11 +32,10 @@ jobs:
           fi
           echo "Version: $TAG_VERSION"
 
-      - name: Install build
-        run: pip install build
+      - uses: astral-sh/setup-uv@v7
 
       - name: Build sdist and wheel
-        run: python -m build
+        run: uv build
 
       - uses: actions/upload-artifact@v4
         with:
