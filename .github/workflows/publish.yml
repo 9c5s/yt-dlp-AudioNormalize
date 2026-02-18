@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v7
         with:
           python-version: "3.13"
 
@@ -31,8 +31,6 @@ jobs:
             exit 1
           fi
           echo "Version: $TAG_VERSION"
-
-      - uses: astral-sh/setup-uv@v7
 
       - name: Build sdist and wheel
         run: uv build
