@@ -29,6 +29,15 @@ jobs:
         run: |
           if [ "${{ github.ref_type }}" = "tag" ]; then
             VERSION="${GITHUB_REF_NAME#v}"
+            PKG_VERSION=$(python3 -c "
+          import tomllib, pathlib
+          data = tomllib.loads(pathlib.Path('pyproject.toml').read_text())
+          print(data['project']['version'])
+          ")
+            if [ "$VERSION" != "$PKG_VERSION" ]; then
+              echo "::error::Tag version ($VERSION) does not match pyproject.toml version ($PKG_VERSION)"
+              exit 1
+            fi
             echo "version=$VERSION" >> "$GITHUB_OUTPUT"
             echo "should-publish=true" >> "$GITHUB_OUTPUT"
           else
@@ -61,22 +70,6 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: astral-sh/setup-uv@v7
-        with:
-          python-version: "3.13"
-
-      - name: Verify version consistency
-        run: |
-          VERSION="${{ needs.resolve-version.outputs.version }}"
-          PKG_VERSION=$(uv run python -c "
-          import tomllib, pathlib
-          data = tomllib.loads(pathlib.Path('pyproject.toml').read_text())
-          print(data['project']['version'])
-          ")
-          if [ "$VERSION" != "$PKG_VERSION" ]; then
-            echo "::error::Resolved version ($VERSION) does not match pyproject.toml version ($PKG_VERSION)"
-            exit 1
-          fi
-          echo "Version: $VERSION"
 
       - name: Build sdist and wheel
         run: uv build

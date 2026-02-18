@@ -7,37 +7,45 @@ on:
     branches: [master]
   workflow_call:
 
+permissions: {}
+
 jobs:
   lint:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/ruff-action@v3
+        with:
+          args: "format --check"
 
-      - name: Run ruff format check
-        run: uvx ruff format --check
-
-      - name: Run ruff lint
-        run: uvx ruff check
+      - uses: astral-sh/ruff-action@v3
+        with:
+          args: "check"
 
   typecheck:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
 
       - uses: astral-sh/setup-uv@v7
         with:
           python-version: "3.13"
+          activate-environment: true
 
       - name: Install dependencies
         run: uv sync --all-extras --locked
 
-      - name: Run pyright
-        run: uvx pyright
+      - uses: jakebailey/pyright-action@v3
 
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
