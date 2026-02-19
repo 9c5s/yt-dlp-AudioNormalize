@@ -90,7 +90,9 @@ jobs:
     needs: [resolve-version, build]
     if: needs.resolve-version.outputs.should-publish == 'true'
     runs-on: ubuntu-latest
-    environment: pypi
+    environment:
+      name: pypi
+      url: https://pypi.org/p/yt-dlp-AudioNormalize
     permissions:
       id-token: write
     steps:
