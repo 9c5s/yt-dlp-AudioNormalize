@@ -6,6 +6,13 @@ pre-commit:
       glob: lefthook.yml
       run: uvx lefthook validate
 
+    - name: tombi
+      glob: '*.toml'
+      run: >
+        uvx tombi format {staged_files} &&
+        uvx tombi lint {staged_files}
+      stage_fixed: true
+
     - name: ruff
       glob: '*.{py,pyi}'
       run: >
