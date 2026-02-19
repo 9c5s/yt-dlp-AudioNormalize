@@ -28,10 +28,10 @@ dependencies = [
 Repository = "https://github.com/9c5s/yt-dlp-AudioNormalize"
 Issues = "https://github.com/9c5s/yt-dlp-AudioNormalize/issues"
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "pytest>=9.0",
-    "yt-dlp>=2026.2.4",
+    "yt-dlp",
 ]
 
 [tool.setuptools.packages.find]
