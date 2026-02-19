@@ -218,16 +218,17 @@ dependencies = [
     { name = "ffmpeg-normalize" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "pytest" },
     { name = "yt-dlp" },
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "ffmpeg-normalize", specifier = ">=1.37.3" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0" },
-    { name = "yt-dlp", marker = "extra == 'dev'", specifier = ">=2026.2.4" },
+requires-dist = [{ name = "ffmpeg-normalize", specifier = ">=1.37.3" }]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest", specifier = ">=9.0" },
+    { name = "yt-dlp" },
 ]
-provides-extras = ["dev"]
