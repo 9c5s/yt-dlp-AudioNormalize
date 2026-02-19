@@ -31,6 +31,7 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           REF_TYPE: ${{ github.ref_type }}
           REF_NAME: ${{ github.ref_name }}
+          BEFORE_SHA: ${{ github.event.before }}
         run: |
           VERSION=$(python3 -c "
           import tomllib, pathlib
@@ -53,11 +54,15 @@ jobs:
             echo "version=$VERSION" >> "$GITHUB_OUTPUT"
             echo "should-publish=true" >> "$GITHUB_OUTPUT"
           else
-            PREVIOUS=$(git show HEAD~1:pyproject.toml | python3 -c "
+            PREVIOUS=""
+            if [ -n "$BEFORE_SHA" ] && [ "$BEFORE_SHA" != "0000000000000000000000000000000000000000" ]; then
+              git fetch --depth=1 origin "$BEFORE_SHA" 2>/dev/null || true
+              PREVIOUS=$(git show "$BEFORE_SHA":pyproject.toml | python3 -c "
           import tomllib, sys
           data = tomllib.loads(sys.stdin.read())
           print(data['project']['version'])
           " 2>/dev/null || echo "")
+            fi
 
             if [ "$VERSION" != "$PREVIOUS" ] && [ -n "$VERSION" ]; then
               echo "version=$VERSION" >> "$GITHUB_OUTPUT"
@@ -116,7 +121,7 @@ jobs:
         env:
           TAG: v${{ needs.resolve-version.outputs.version }}
         run: |
-          if ! git rev-parse "$TAG" >/dev/null 2>&1; then
+          if [ -z "$(git ls-remote --tags origin "refs/tags/$TAG")" ]; then
             git tag "$TAG"
             git push origin "$TAG"
           fi
