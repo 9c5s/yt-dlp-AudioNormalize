@@ -104,8 +104,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Create tag if not exists
+        env:
+          TAG: v${{ needs.resolve-version.outputs.version }}
         run: |
-          TAG="v${{ needs.resolve-version.outputs.version }}"
           if ! git rev-parse "$TAG" >/dev/null 2>&1; then
             git tag "$TAG"
             git push origin "$TAG"
