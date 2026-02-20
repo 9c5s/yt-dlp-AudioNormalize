@@ -13,6 +13,10 @@ pre-commit:
         uvx tombi lint {staged_files}
       stage_fixed: true
 
+    - name: actionlint
+      glob: '.github/workflows/*.yml'
+      run: uvx actionlint {staged_files}
+
     - name: ruff
       glob: '*.{py,pyi}'
       run: >
@@ -23,3 +27,11 @@ pre-commit:
     - name: pyright
       glob: 'yt_dlp_plugins/**/*.py'
       run: uvx pyright {staged_files}
+
+colors: false
+no_tty: true
+output:
+  - meta
+  - summary
+  - execution_info
+  - execution_out
