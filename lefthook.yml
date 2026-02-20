@@ -14,8 +14,12 @@ pre-commit:
       stage_fixed: true
 
     - name: actionlint
-      glob: '.github/workflows/*.yml'
-      run: uvx actionlint {staged_files}
+      glob: '.github/workflows/*.{yml,yaml}'
+      run: uvx --from actionlint-py actionlint {staged_files}
+
+    - name: zizmor
+      glob: '.github/workflows/*.{yml,yaml}'
+      run: uvx zizmor {staged_files}
 
     - name: ruff
       glob: '*.{py,pyi}'
@@ -30,8 +34,3 @@ pre-commit:
 
 colors: false
 no_tty: true
-output:
-  - meta
-  - summary
-  - execution_info
-  - execution_out
