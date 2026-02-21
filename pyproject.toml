@@ -1,6 +1,6 @@
 [project]
 name = "yt-dlp-audio-normalize"
-version = "0.2.0"
+version = "0.3.0"
 description = "yt-dlp postprocessor plugin for audio normalization using ffmpeg-normalize"
 readme = "README.md"
 requires-python = ">=3.10"
