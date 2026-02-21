@@ -1,11 +1,16 @@
 # yt-dlp-audio-normalize
 
-[ffmpeg-normalize](https://github.com/slhck/ffmpeg-normalize) を使用した音声正規化のための yt-dlp PostProcessor プラグイン
+[![CI](https://github.com/9c5s/yt-dlp-AudioNormalize/actions/workflows/ci.yml/badge.svg)](https://github.com/9c5s/yt-dlp-AudioNormalize/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/yt-dlp-audio-normalize)](https://pypi.org/project/yt-dlp-audio-normalize/)
+[![Python](https://img.shields.io/pypi/pyversions/yt-dlp-audio-normalize)](https://pypi.org/project/yt-dlp-audio-normalize/)
+[![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](LICENSE)
+
+[ffmpeg-normalize](https://github.com/slhck/ffmpeg-normalize) を使用した音量正規化のための yt-dlp PostProcessor プラグイン
 
 ## 要件
 
 - Python >= 3.10
-- yt-dlp >= 2026.2.4
+- yt-dlp
 - ffmpeg (システムにインストール済みであること)
 
 ## インストール
@@ -14,20 +19,22 @@
 pip install -U yt-dlp-audio-normalize
 ```
 
-## 使い方
+## 使用方法
 
 ### --use-postprocessor
 
 ```bash
-# デフォルトの正規化
+# デフォルト
 yt-dlp --use-postprocessor AudioNormalize URL
 
 # パラメータを指定
 yt-dlp --use-postprocessor "AudioNormalize:target_level=-14.0;audio_codec=aac" URL
 
 # 実行タイミングを指定
-yt-dlp --use-postprocessor "AudioNormalize:when=after_move" URL
+yt-dlp --use-postprocessor "AudioNormalize:when=pre_process" URL
 ```
+
+`when` を省略した場合、自動的に `after_move` で実行される。これにより、ファイルが最終パスに移動された後に音量正規化が行われる。
 
 ### --ppa (PostProcessor Arguments)
 
@@ -36,6 +43,19 @@ yt-dlp --ppa "AudioNormalize:-t -14.0 -c:a aac -b:a 128k" URL
 ```
 
 `--use-postprocessor` の kwargs と `--ppa` の両方が指定された場合、PPA が優先される。
+
+### 自動推定
+
+ダウンロード済みファイルのメタデータから以下のパラメータが自動的に設定される:
+
+| パラメータ | ソース | 説明 |
+| ---------- | ------ | ---- |
+| `extension` | `ext` | 出力ファイルの拡張子 |
+| `audio_codec` | `acodec` | 音声コーデック(デコーダ名→エンコーダ名に自動変換) |
+| `sample_rate` | `asr` | サンプルレート(未取得時は 48000 Hz) |
+| `audio_bitrate` | `abr` | 音声ビットレート |
+
+ユーザーが明示的に指定した値は自動推定値より優先される。
 
 ### Python API
 
