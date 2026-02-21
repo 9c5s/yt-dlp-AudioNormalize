@@ -3,6 +3,10 @@
 使用方法:
     --use-postprocessor "AudioNormalize:target_level=-14.0;audio_codec=aac"
     --ppa "AudioNormalize:-t -14.0 -c:a aac"
+
+whenを省略した場合、yt-dlpのデフォルト(post_process)ではなくafter_moveで実行される。
+これにより、ファイルが最終パスに移動された後に音声正規化が行われる。
+明示的にwhenを指定した場合はその指定が優先される。
 """
 
 from __future__ import annotations
@@ -41,6 +45,11 @@ class AudioNormalizePP(PostProcessor):
     短縮フラグも提供する
     bool型パラメータは値なしフラグとして指定可能(例: --dual-mono)
     PPA引数が指定された場合、--use-postprocessor経由のkwargsより優先される
+
+    whenを省略した場合、set_downloaderでpost_processからafter_moveへ自動的に
+    再配置される。これにより、ファイルが最終パスに移動された後に正規化が実行される。
+    ユーザーがwhenを明示指定した場合はpost_processリストに存在しないため、
+    再配置は発動しない。
     """
 
     # 短縮フラグ→パラメータ名のマッピング(自動導出不可能なもののみ)
