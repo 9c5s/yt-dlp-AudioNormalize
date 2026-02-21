@@ -103,6 +103,26 @@ class AudioNormalizePP(PostProcessor):
         super().__init__(downloader)
         self._kwargs = kwargs
 
+    def set_downloader(self, downloader: Any = None) -> None:  # noqa: ANN401
+        """ダウンローダーを設定し、post_processからafter_moveへ再配置する
+
+        yt-dlpは--use-postprocessorでwhenが未指定の場合、post_processに登録する。
+        音声正規化はファイル移動後に実行すべきため、post_processに登録されている
+        場合はafter_moveへ自動的に移動する。
+        ユーザーがwhen=after_moveを明示指定した場合はpost_processリストに
+        存在しないため、この処理は発動しない。
+        """
+        super().set_downloader(downloader)
+        if downloader is None:
+            return
+        pps = getattr(downloader, "_pps", None)
+        if pps is None:
+            return
+        post_list = pps.get("post_process")
+        if post_list is not None and self in post_list:
+            post_list.remove(self)
+            pps["after_move"].append(self)
+
     @staticmethod
     def _extract_scalar_type(hint: object) -> type | None:
         """型ヒントからスカラー型を抽出する list型の場合はNoneを返す"""
