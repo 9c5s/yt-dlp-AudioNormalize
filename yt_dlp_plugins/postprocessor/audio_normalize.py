@@ -6,7 +6,8 @@
 
 whenを省略した場合、yt-dlpのデフォルト(post_process)ではなくafter_moveで実行される。
 これにより、ファイルが最終パスに移動された後に音声正規化が行われる。
-明示的にwhenを指定した場合はその指定が優先される。
+when=after_move以外を指定した場合もafter_moveへ再配置される。
+yt-dlpのアーキテクチャ上、whenの省略と明示指定をPP側から区別できないため。
 """
 
 from __future__ import annotations
@@ -48,8 +49,10 @@ class AudioNormalizePP(PostProcessor):
 
     whenを省略した場合、set_downloaderでpost_processからafter_moveへ自動的に
     再配置される。これにより、ファイルが最終パスに移動された後に正規化が実行される。
-    ユーザーがwhenを明示指定した場合はpost_processリストに存在しないため、
-    再配置は発動しない。
+    when=post_processを明示指定した場合も同様にafter_moveへ移動する。
+    yt-dlpがwhenをPPに渡す前にpopするため、省略と明示指定を区別できない。
+    after_move以外のwhen(例: pre_process)を指定した場合は、post_processリストに
+    存在しないため再配置は発動しない。
     """
 
     # 短縮フラグ→パラメータ名のマッピング(自動導出不可能なもののみ)
@@ -118,8 +121,11 @@ class AudioNormalizePP(PostProcessor):
         yt-dlpは--use-postprocessorでwhenが未指定の場合、post_processに登録する。
         音声正規化はファイル移動後に実行すべきため、post_processに登録されている
         場合はafter_moveへ自動的に移動する。
-        ユーザーがwhen=after_moveを明示指定した場合はpost_processリストに
-        存在しないため、この処理は発動しない。
+
+        when=post_processの明示指定でも再配置が発動する。yt-dlpがwhenを
+        pp_def.pop('when', 'post_process')でPPに渡す前に取り除くため、
+        省略と明示指定を区別できない。after_move以外のwhen(例: pre_process)を
+        指定した場合はpost_processリストに存在しないため再配置されない。
         """
         super().set_downloader(downloader)
         if downloader is None:

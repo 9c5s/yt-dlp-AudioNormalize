@@ -578,6 +578,10 @@ class TestSetDownloader:
     yt-dlpはwhen未指定時にpost_processをデフォルトにするが、
     音声正規化はファイル移動後に実行すべきため、
     set_downloaderでpost_processからafter_moveへ自動的に再配置すること
+
+    Note:
+        各テストでdownloader._postprocessor_hooks = []を設定しているのは、
+        super().set_downloader()内部でこの属性にアクセスするため。
     """
 
     def test_moves_self_from_post_process_to_after_move(self) -> None:
@@ -628,6 +632,20 @@ class TestSetDownloader:
         downloader = MagicMock(spec=[])
 
         pp.set_downloader(downloader)
+
+    def test_preserves_other_pps_in_post_process(self) -> None:
+        """他のPPはpost_processに残り、AudioNormalizePPのみ移動すること"""
+        pp = AudioNormalizePP()
+        other_pp = MagicMock()
+        downloader = MagicMock()
+        downloader._pps = {"post_process": [other_pp, pp], "after_move": []}
+        downloader._postprocessor_hooks = []
+
+        pp.set_downloader(downloader)
+
+        assert other_pp in downloader._pps["post_process"]
+        assert pp not in downloader._pps["post_process"]
+        assert pp in downloader._pps["after_move"]
 
 
 # === _CODEC_MAP ===
