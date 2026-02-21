@@ -6,8 +6,9 @@
 
 whenを省略した場合、yt-dlpのデフォルト(post_process)ではなくafter_moveで実行される。
 これにより、ファイルが最終パスに移動された後に音声正規化が行われる。
-when=after_move以外を指定した場合もafter_moveへ再配置される。
-yt-dlpのアーキテクチャ上、whenの省略と明示指定をPP側から区別できないため。
+when=post_processを明示指定した場合も、省略時と同様にafter_moveへ再配置される。
+yt-dlpがwhenをPPに渡す前にpopするため、省略と明示指定を区別できない。
+pre_process等の他のwhen値を指定した場合は再配置されない。
 """
 
 from __future__ import annotations
