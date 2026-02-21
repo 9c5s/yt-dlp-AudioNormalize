@@ -604,6 +604,18 @@ class TestSetDownloader:
         assert downloader._pps["after_move"] == [pp]
         assert downloader._pps["post_process"] == []
 
+    def test_creates_after_move_list_if_missing(self) -> None:
+        """_ppsにafter_moveキーがない場合、リストを作成して移動すること"""
+        pp = AudioNormalizePP()
+        downloader = MagicMock()
+        downloader._pps = {"post_process": [pp]}
+        downloader._postprocessor_hooks = []
+
+        pp.set_downloader(downloader)
+
+        assert pp not in downloader._pps["post_process"]
+        assert pp in downloader._pps["after_move"]
+
     def test_no_op_when_downloader_is_none(self) -> None:
         """downloaderがNoneの場合、エラーにならないこと"""
         pp = AudioNormalizePP()

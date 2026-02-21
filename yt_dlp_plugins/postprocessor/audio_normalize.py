@@ -130,7 +130,7 @@ class AudioNormalizePP(PostProcessor):
         post_list = pps.get("post_process")
         if post_list is not None and self in post_list:
             post_list.remove(self)
-            pps["after_move"].append(self)
+            pps.setdefault("after_move", []).append(self)
 
     @staticmethod
     def _extract_scalar_type(hint: object) -> type | None:
