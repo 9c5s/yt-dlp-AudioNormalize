@@ -11,39 +11,22 @@ on:
 permissions: {}
 
 jobs:
-  lint:
+  megalinter:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      issues: write
+      pull-requests: write
+      statuses: write
     steps:
-      - uses: actions/checkout@v6
-
-      - uses: raven-actions/actionlint@v2
-
-      - uses: astral-sh/ruff-action@v3
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
-          args: "format --check"
+          fetch-depth: 0
+          persist-credentials: false
 
-      - uses: astral-sh/ruff-action@v3
-        with:
-          args: "check"
-
-  typecheck:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: astral-sh/setup-uv@v7
-        with:
-          python-version: "3.13"
-          activate-environment: true
-
-      - name: Install dependencies
-        run: uv sync --locked
-
-      - uses: jakebailey/pyright-action@v3
+      - uses: oxsecurity/megalinter/flavors/python@42bb470545e359597e7f12156947c436e4e3fb9a # v9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   test:
     runs-on: ubuntu-latest
@@ -54,9 +37,11 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
 
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7
         with:
           python-version: ${{ matrix.python-version }}
 

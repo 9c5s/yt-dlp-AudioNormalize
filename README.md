@@ -55,7 +55,7 @@ with yt_dlp.YoutubeDL(opts) as ydl:
 ### ショートフラグ
 
 | フラグ | パラメータ | 説明 |
-|------|-----------|------|
+| ------ | ----------- | ------ |
 | `-nt` | `normalization_type` | 正規化タイプ |
 | `-t` | `target_level` | ターゲットレベル |
 | `-p` | `print_stats` | 統計情報の表示 |
