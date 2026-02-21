@@ -3,6 +3,12 @@
 使用方法:
     --use-postprocessor "AudioNormalize:target_level=-14.0;audio_codec=aac"
     --ppa "AudioNormalize:-t -14.0 -c:a aac"
+
+whenを省略した場合、yt-dlpのデフォルト(post_process)ではなくafter_moveで実行される。
+これにより、ファイルが最終パスに移動された後に音声正規化が行われる。
+when=post_processを明示指定した場合も、省略時と同様にafter_moveへ再配置される。
+yt-dlpがwhenをPPに渡す前にpopするため、省略と明示指定を区別できない。
+pre_process等の他のwhen値を指定した場合は再配置されない。
 """
 
 from __future__ import annotations
@@ -41,6 +47,13 @@ class AudioNormalizePP(PostProcessor):
     短縮フラグも提供する
     bool型パラメータは値なしフラグとして指定可能(例: --dual-mono)
     PPA引数が指定された場合、--use-postprocessor経由のkwargsより優先される
+
+    whenを省略した場合、set_downloaderでpost_processからafter_moveへ自動的に
+    再配置される。これにより、ファイルが最終パスに移動された後に正規化が実行される。
+    when=post_processを明示指定した場合も同様にafter_moveへ移動する。
+    yt-dlpがwhenをPPに渡す前にpopするため、省略と明示指定を区別できない。
+    after_move以外のwhen(例: pre_process)を指定した場合は、post_processリストに
+    存在しないため再配置は発動しない。
     """
 
     # 短縮フラグ→パラメータ名のマッピング(自動導出不可能なもののみ)
@@ -102,6 +115,29 @@ class AudioNormalizePP(PostProcessor):
         """
         super().__init__(downloader)
         self._kwargs = kwargs
+
+    def set_downloader(self, downloader: Any = None) -> None:  # noqa: ANN401
+        """ダウンローダーを設定し、post_processからafter_moveへ再配置する
+
+        yt-dlpは--use-postprocessorでwhenが未指定の場合、post_processに登録する。
+        音声正規化はファイル移動後に実行すべきため、post_processに登録されている
+        場合はafter_moveへ自動的に移動する。
+
+        when=post_processの明示指定でも再配置が発動する。yt-dlpがwhenを
+        pp_def.pop('when', 'post_process')でPPに渡す前に取り除くため、
+        省略と明示指定を区別できない。after_move以外のwhen(例: pre_process)を
+        指定した場合はpost_processリストに存在しないため再配置されない。
+        """
+        super().set_downloader(downloader)
+        if downloader is None:
+            return
+        pps = getattr(downloader, "_pps", None)
+        if pps is None:
+            return
+        post_list = pps.get("post_process")
+        if post_list is not None and self in post_list:
+            post_list.remove(self)
+            pps.setdefault("after_move", []).append(self)
 
     @staticmethod
     def _extract_scalar_type(hint: object) -> type | None:

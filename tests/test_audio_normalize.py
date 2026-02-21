@@ -569,6 +569,85 @@ class TestRun:
         assert result == ([], info)
 
 
+# === set_downloader (when再配置) ===
+
+
+class TestSetDownloader:
+    """set_downloaderがwhen未指定時にafter_moveへ再配置すること
+
+    yt-dlpはwhen未指定時にpost_processをデフォルトにするが、
+    音声正規化はファイル移動後に実行すべきため、
+    set_downloaderでpost_processからafter_moveへ自動的に再配置すること
+
+    Note:
+        各テストでdownloader._postprocessor_hooks = []を設定しているのは、
+        super().set_downloader()内部でこの属性にアクセスするため。
+    """
+
+    def test_moves_self_from_post_process_to_after_move(self) -> None:
+        """post_processに登録されている場合、after_moveに移動すること"""
+        pp = AudioNormalizePP()
+        downloader = MagicMock()
+        downloader._pps = {"post_process": [pp], "after_move": []}
+        downloader._postprocessor_hooks = []
+
+        pp.set_downloader(downloader)
+
+        assert pp not in downloader._pps["post_process"]
+        assert pp in downloader._pps["after_move"]
+
+    def test_no_op_when_already_in_after_move(self) -> None:
+        """after_moveに登録済みの場合、何も変更しないこと"""
+        pp = AudioNormalizePP()
+        downloader = MagicMock()
+        downloader._pps = {"post_process": [], "after_move": [pp]}
+        downloader._postprocessor_hooks = []
+
+        pp.set_downloader(downloader)
+
+        assert downloader._pps["after_move"] == [pp]
+        assert downloader._pps["post_process"] == []
+
+    def test_creates_after_move_list_if_missing(self) -> None:
+        """_ppsにafter_moveキーがない場合、リストを作成して移動すること"""
+        pp = AudioNormalizePP()
+        downloader = MagicMock()
+        downloader._pps = {"post_process": [pp]}
+        downloader._postprocessor_hooks = []
+
+        pp.set_downloader(downloader)
+
+        assert pp not in downloader._pps["post_process"]
+        assert pp in downloader._pps["after_move"]
+
+    def test_no_op_when_downloader_is_none(self) -> None:
+        """downloaderがNoneの場合、エラーにならないこと"""
+        pp = AudioNormalizePP()
+
+        pp.set_downloader(None)
+
+    def test_no_op_when_pps_not_available(self) -> None:
+        """downloaderに_ppsがない場合、エラーにならないこと"""
+        pp = AudioNormalizePP()
+        downloader = MagicMock(spec=[])
+
+        pp.set_downloader(downloader)
+
+    def test_preserves_other_pps_in_post_process(self) -> None:
+        """他のPPはpost_processに残り、AudioNormalizePPのみ移動すること"""
+        pp = AudioNormalizePP()
+        other_pp = MagicMock()
+        downloader = MagicMock()
+        downloader._pps = {"post_process": [other_pp, pp], "after_move": []}
+        downloader._postprocessor_hooks = []
+
+        pp.set_downloader(downloader)
+
+        assert other_pp in downloader._pps["post_process"]
+        assert pp not in downloader._pps["post_process"]
+        assert pp in downloader._pps["after_move"]
+
+
 # === _CODEC_MAP ===
 
 
