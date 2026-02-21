@@ -1,0 +1,49 @@
+# MegaLinter 設定
+# 参照: https://megalinter.io/latest/configuration/
+
+# ホワイトリスト方式で有効化する linter を明示指定する
+ENABLE_LINTERS:
+  # Python
+  - PYTHON_RUFF
+  - PYTHON_PYRIGHT
+  - PYTHON_BANDIT
+  # GitHub Actions
+  - ACTION_ACTIONLINT
+  # Markdown
+  - MARKDOWN_MARKDOWNLINT
+  # Repository
+  - REPOSITORY_GITLEAKS
+  - REPOSITORY_SECRETLINT
+  - REPOSITORY_TRUFFLEHOG
+  - REPOSITORY_GIT_DIFF
+  - REPOSITORY_GRYPE
+
+# PRコメントでlint結果を表示する
+GITHUB_COMMENT_REPORTER: true
+
+# ChecksタブにlinterごとのStatusを表示する
+GITHUB_STATUS_REPORTER: true
+
+# pyright用の依存解決
+PRE_COMMANDS:
+  - command: "pip install uv && uv sync --locked"
+    cwd: "workspace"
+
+# MegaLinter生成ファイルを出力するディレクトリ
+REPORT_OUTPUT_FOLDER: megalinter-reports
+
+# ruff設定はpyproject.tomlを使用する
+PYTHON_RUFF_CONFIG_FILE: pyproject.toml
+
+# pyright/banditはpyproject.tomlのinclude設定に合わせてテストファイルを除外する
+PYTHON_PYRIGHT_FILTER_REGEX_EXCLUDE: 'tests/.*'
+PYTHON_BANDIT_FILTER_REGEX_EXCLUDE: 'tests/.*'
+
+# markdownlint設定
+MARKDOWN_MARKDOWNLINT_CONFIG_FILE: .markdownlint.json
+
+# docs/plans/配下のMarkdownをlint対象から除外する
+MARKDOWN_MARKDOWNLINT_FILTER_REGEX_EXCLUDE: 'docs/plans/.*'
+
+# .tmp/配下を全体的に除外する
+FILTER_REGEX_EXCLUDE: '(\.tmp/|megalinter-reports/)'
