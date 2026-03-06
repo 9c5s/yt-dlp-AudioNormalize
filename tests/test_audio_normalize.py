@@ -204,6 +204,38 @@ class TestBuildParamMap:
         assert result1 is result2
 
 
+# === _build_type_map ===
+
+
+class TestBuildTypeMap:
+    """パラメータ名から型への逆引きマップを構築すること
+
+    _build_param_map()のフラグ→(パラメータ名, 型)マッピングを元に、
+    パラメータ名をキー、型を値とする辞書を構築すること
+    """
+
+    def test_returns_dict(self) -> None:
+        """戻り値が辞書であること"""
+        result = AudioNormalizePP._build_type_map()
+
+        assert isinstance(result, dict)
+
+    def test_cache_returns_same_object(self) -> None:
+        """functools.cacheにより2回呼んでも同一オブジェクトが返されること"""
+        result1 = AudioNormalizePP._build_type_map()
+        result2 = AudioNormalizePP._build_type_map()
+
+        assert result1 is result2
+
+    def test_contains_all_param_names_from_param_map(self) -> None:
+        """_build_param_map()の全パラメータ名が含まれること"""
+        param_map = AudioNormalizePP._build_param_map()
+        type_map = AudioNormalizePP._build_type_map()
+
+        expected_names = {name for name, _ in param_map.values()}
+        assert expected_names == set(type_map.keys())
+
+
 # === _build_normalize_kwargs ===
 
 

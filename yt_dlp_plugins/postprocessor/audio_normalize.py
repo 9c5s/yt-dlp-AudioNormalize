@@ -181,6 +181,21 @@ class AudioNormalizePP(PostProcessor):
                 param_map[flag] = param_map[long_flag]
         return param_map
 
+
+    @staticmethod
+    @functools.cache
+    def _build_type_map() -> dict[str, type]:
+        """パラメータ名から型への逆引きマップを構築する
+
+        _build_param_map()のフラグ→(パラメータ名, 型)マッピングを元に、
+        パラメータ名→型のマッピングを構築する
+        同一パラメータ名に複数フラグが対応する場合は最初の型を採用する
+        """
+        type_map: dict[str, type] = {}
+        for name, typ in AudioNormalizePP._build_param_map().values():
+            type_map.setdefault(name, typ)
+        return type_map
+
     @staticmethod
     def _infer_defaults(information: _InfoDict) -> dict[str, Any]:
         """_InfoDictからFFmpegNormalizeのデフォルト値を推定する
@@ -241,10 +256,7 @@ class AudioNormalizePP(PostProcessor):
             return {}
         kwargs: dict[str, Any] = {}
         param_map = self._build_param_map()
-        # パラメータ名→型の逆引きマップを構築する
-        type_map: dict[str, type] = {}
-        for name, typ in param_map.values():
-            type_map.setdefault(name, typ)
+        type_map = self._build_type_map()
         for key, str_val in self._kwargs.items():
             # フラグ形式(-t, -c:a, --target-level等)の解決を試みる
             mapping = param_map.get(key)
