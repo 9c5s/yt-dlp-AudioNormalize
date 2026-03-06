@@ -384,6 +384,17 @@ class TestUsePostprocessorKwargs:
         assert result["audio_codec"] == "aac"
         assert result["audio_bitrate"] == "128k"
 
+    def test_invalid_float_value_warns(self, make_pp) -> None:
+        """float型パラメータに無効な文字列を渡した場合に警告が出ること"""
+        pp = make_pp(target_level="not_a_number")
+
+        result = pp._build_normalize_kwargs()
+
+        assert "target_level" not in result
+        pp.report_warning.assert_called_once_with(
+            "無効なパラメータです: target_level=not_a_number"
+        )
+
 
 # === _normalize_file ===
 
@@ -526,6 +537,22 @@ class TestNormalizeFile:
         assert "audio_codec" not in call_kwargs
         assert call_kwargs["sample_rate"] == 48000
         assert "audio_bitrate" not in call_kwargs
+
+    @patch("yt_dlp_plugins.postprocessor.audio_normalize.tempfile.mkstemp")
+    def test_mkstemp_failure_warns_and_returns(
+        self, mock_mkstemp: MagicMock, make_pp, tmp_path: Path
+    ) -> None:
+        """tempfile.mkstempがOSErrorを投げた場合に警告付きで早期リターンすること"""
+        test_file = tmp_path / "test.mp4"
+        test_file.write_bytes(b"original content")
+        mock_mkstemp.side_effect = OSError("disk full")
+        pp = make_pp()
+        info = {"filepath": str(test_file), "ext": "mp4", "acodec": "aac"}
+
+        pp._normalize_file(str(test_file), info)
+
+        assert test_file.read_bytes() == b"original content"
+        pp.report_warning.assert_called_once_with("一時ファイルの作成に失敗しました")
 
 
 # === run ===
