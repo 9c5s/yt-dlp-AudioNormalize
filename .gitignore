@@ -10,5 +10,7 @@ __pycache__/
 build/
 CLAUDE.md
 dist/
-docs/plans/
+docs/
 megalinter-reports/
+.coverage
+coverage.xml
