@@ -39,8 +39,4 @@ pre-commit:
 
     - name: pytest
       glob: '**/*.py'
-      exclude: '**/test_*.py'
-      run: >
-        t=$(for f in {staged_files}; do
-        find . -name test_$(basename $f) -type f -print -quit; done);
-        ${t:+uv run pytest -q $t}
+      run: uv run pytest -q
