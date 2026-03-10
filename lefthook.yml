@@ -11,6 +11,12 @@ pre-commit:
       glob: lefthook.yml
       run: uv run lefthook validate
 
+    - name: codecov
+      glob: codecov.yml
+      run: >
+        curl -s --fail-with-body -X POST --data-binary
+        @codecov.yml https://codecov.io/validate
+
     - name: tombi
       glob: '*.toml'
       run: |

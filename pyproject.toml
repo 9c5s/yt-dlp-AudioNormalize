@@ -37,6 +37,7 @@ dev = [
 ]
 test = [
   "pytest>=9.0",
+  "pytest-cov>=6.0",
   "yt-dlp>=2026.3.3",
 ]
 
@@ -50,7 +51,14 @@ stubPath = "typings"
 typeCheckingMode = "strict"
 
 [tool.pytest]
-addopts = ["--strict-markers", "--tb=short", "-v"]
+addopts = [
+  "--cov-fail-under=90",
+  "--cov-report=term-missing",
+  "--cov=yt_dlp_plugins",
+  "--strict-markers",
+  "--tb=short",
+  "-v",
+]
 testpaths = ["tests"]
 
 [tool.ruff]
