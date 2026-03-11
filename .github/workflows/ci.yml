@@ -97,3 +97,16 @@ jobs:
         with:
           files: coverage.xml
           fail_ci_if_error: true
+
+  test-gate:
+    if: always()
+    needs: [test]
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - run: |
+          if [ "$TEST_RESULT" = "failure" ] || [ "$TEST_RESULT" = "cancelled" ]; then
+            exit 1
+          fi
+        env:
+          TEST_RESULT: ${{ needs.test.result }}
