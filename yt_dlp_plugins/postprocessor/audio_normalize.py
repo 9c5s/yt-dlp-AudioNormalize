@@ -181,7 +181,6 @@ class AudioNormalizePP(PostProcessor):
                 param_map[flag] = param_map[long_flag]
         return param_map
 
-
     @staticmethod
     @functools.cache
     def _build_type_map() -> dict[str, type]:
