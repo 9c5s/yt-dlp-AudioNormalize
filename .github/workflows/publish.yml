@@ -107,7 +107,9 @@ jobs:
 
   publish:
     needs: [resolve-version, build]
-    if: needs.resolve-version.outputs.should-publish == 'true'
+    if: >-
+      !failure() && !cancelled()
+      && needs.resolve-version.outputs.should-publish == 'true'
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -124,7 +126,9 @@ jobs:
 
   github-release:
     needs: [resolve-version, build, publish]
-    if: needs.resolve-version.outputs.should-publish == 'true'
+    if: >-
+      !failure() && !cancelled()
+      && needs.resolve-version.outputs.should-publish == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -148,6 +152,7 @@ jobs:
           path: dist/
 
       - uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2
+        # zizmor: ignore[superfluous-actions]
         with:
           tag_name: v${{ needs.resolve-version.outputs.version }}
           generate_release_notes: true
