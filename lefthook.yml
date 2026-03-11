@@ -63,4 +63,4 @@ post-merge:
 post-rewrite:
   jobs:
     - name: uv-sync
-      run: '[ "{1}" = rebase ] && uv sync || true'
+      run: '[ x{1} = xrebase ] && uv sync || true'
