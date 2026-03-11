@@ -54,3 +54,8 @@ pre-commit:
     - name: pytest
       glob: '**/*.py'
       run: uv run pytest -q
+
+post-merge:
+  jobs:
+    - name: uv-sync
+      run: uv sync
