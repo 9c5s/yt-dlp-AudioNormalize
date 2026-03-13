@@ -1,7 +1,7 @@
 # yt-dlp-audio-normalize
 
-[![CI](https://github.com/9c5s/yt-dlp-AudioNormalize/actions/workflows/ci.yml/badge.svg)](https://github.com/9c5s/yt-dlp-AudioNormalize/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/9c5s/yt-dlp-AudioNormalize/branch/master/graph/badge.svg)](https://codecov.io/gh/9c5s/yt-dlp-AudioNormalize)
+[![CI](https://github.com/9c5s/yt-dlp-audio-normalize/actions/workflows/ci.yml/badge.svg)](https://github.com/9c5s/yt-dlp-audio-normalize/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/9c5s/yt-dlp-audio-normalize/branch/master/graph/badge.svg)](https://codecov.io/gh/9c5s/yt-dlp-audio-normalize)
 [![PyPI](https://img.shields.io/pypi/v/yt-dlp-audio-normalize)](https://pypi.org/project/yt-dlp-audio-normalize/)
 [![Python](https://img.shields.io/pypi/pyversions/yt-dlp-audio-normalize)](https://pypi.org/project/yt-dlp-audio-normalize/)
 [![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](LICENSE)

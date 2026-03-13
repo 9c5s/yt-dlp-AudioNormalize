@@ -23,8 +23,8 @@ dependencies = [
 ]
 
 [project.urls]
-Issues = "https://github.com/9c5s/yt-dlp-AudioNormalize/issues"
-Repository = "https://github.com/9c5s/yt-dlp-AudioNormalize"
+Issues = "https://github.com/9c5s/yt-dlp-audio-normalize/issues"
+Repository = "https://github.com/9c5s/yt-dlp-audio-normalize"
 
 [dependency-groups]
 dev = [

@@ -113,7 +113,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/yt-dlp-AudioNormalize
+      url: https://pypi.org/p/yt-dlp-audio-normalize
     permissions:
       id-token: write
     steps:
